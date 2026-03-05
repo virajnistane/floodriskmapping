@@ -23,4 +23,4 @@ wheels/
 *.tmp
 
 # Ignore the output of the exploration notebook
-notebooks/exploration.ipynb
+*.ipynb
