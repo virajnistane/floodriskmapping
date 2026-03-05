@@ -1,0 +1,5 @@
+outs:
+- md5: 8bec053db6e2fca2b9a9cac587d63d30
+  size: 2104389
+  hash: md5
+  path: flood_mask_delft.tif
