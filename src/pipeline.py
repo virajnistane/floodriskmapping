@@ -8,7 +8,7 @@ from rasterio import features
 from rasterio.io import DatasetReader
 from shapely.geometry import shape
 
-from load_data import RAW_DIR, PROC_DIR, load_dem
+from src.load_data import RAW_DIR, PROC_DIR, load_dem
 
 class FloodRiskPipeline:
     def __init__(self, dem_path: Path, water_level: float):

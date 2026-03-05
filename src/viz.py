@@ -3,7 +3,7 @@ import rasterio
 from pathlib import Path
 import numpy as np
 
-from load_data import RAW_DIR, PROC_DIR, load_dem
+from src.load_data import RAW_DIR, PROC_DIR, load_dem
 
 def plot_flood(dem_path: Path, flood_path: Path) -> None:
     with rasterio.open(dem_path) as dem_ds:

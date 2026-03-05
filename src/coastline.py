@@ -3,7 +3,7 @@ from pathlib import Path
 import geopandas as gpd
 from shapely.geometry import LineString, box
 
-from load_data import PROC_DIR, RAW_DIR, load_dem
+from src.load_data import PROC_DIR, RAW_DIR, load_dem
 
 class CoastlineProcessor:
     def __init__(self, dem_path: Path):
