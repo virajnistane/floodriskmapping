@@ -1,0 +1,5 @@
+outs:
+- md5: 6d0b762680e321871b94a44f17c20461
+  size: 490948
+  hash: md5
+  path: dem_nice.tif

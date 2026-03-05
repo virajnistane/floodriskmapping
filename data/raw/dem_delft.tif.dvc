@@ -1,0 +1,5 @@
+outs:
+- md5: 7f232d1210ae78ee49f9cd835244c533
+  size: 5174316
+  hash: md5
+  path: dem_delft.tif

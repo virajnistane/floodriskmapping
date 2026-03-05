@@ -5,9 +5,7 @@ import numpy as np
 
 from load_data import RAW_DIR, PROC_DIR
 
-def plot_flood():
-    dem_path = RAW_DIR / "output_hh.tif"
-    flood_path = PROC_DIR / "flood_mask.tif"
+def plot_flood(dem_path: Path, flood_path: Path) -> None:
     with rasterio.open(dem_path) as dem_ds:
         dem = dem_ds.read(1)
     with rasterio.open(flood_path) as f_ds:
@@ -26,4 +24,4 @@ def plot_flood():
     plt.savefig(PROC_DIR / "flood_map.png", dpi=200)
 
 if __name__ == "__main__":
-    plot_flood()
+    plot_flood(RAW_DIR / "dem_delft.tif", PROC_DIR / "flood_mask_delft.tif")
