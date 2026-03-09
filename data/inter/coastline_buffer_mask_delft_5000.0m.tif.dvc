@@ -1,0 +1,5 @@
+outs:
+- md5: 16a5bdb5da4d33569ee729f1b5593991
+  size: 2104389
+  hash: md5
+  path: coastline_buffer_mask_delft_5000.0m.tif
