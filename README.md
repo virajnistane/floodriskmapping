@@ -49,23 +49,56 @@ source .venv/bin/activate
 
 ### Configuration
 
-All pipeline parameters are managed through `config.yaml`. Edit this file to customize:
+All pipeline parameters are managed through YAML configuration files in the `configs/` directory. Edit or create config files to customize:
 
+- **Config metadata** (name, description)
 - **Input data paths** (DEM file, coastline shapefile)
 - **Water level threshold** (meters)
 - **Coastline buffer distance** (meters, or null to disable)
 - **Output file names** and formats
-- **Visualization settings** (DPI, colormaps, figure size)
+- **Visualization settings** (DPI, colormaps, figure size, output filenames)
 
 Example configuration:
 ```yaml
+# Config identification
+info:
+  name: "delft"
+  description: "Flood risk mapping for Delft"
+
+# Data directories
+data:
+  raw_dir: "data/raw"
+  inter_dir: "data/inter"        # Intermediate files (e.g., coastline buffers)
+  processed_dir: "data/processed"
+  dem_file: "dem_delft.tif"
+  coastline_file: "ne_10m_coastline/ne_10m_coastline.shp"
+
+# Pipeline parameters
 pipeline:
   water_level: 2.0  # meters above reference
   coast_buffer_dist_m: 5000.0  # buffer distance in meters
   metric_crs: 3857  # EPSG code for area calculations
+
+# Output files
+output:
+  flood_mask_raster: "flood_mask_delft.tif"
+  flood_polygons_vector: "flood_polygons_delft.gpkg"
+  summary_report: "flood_summary_delft.txt"
+
+# Visualization
+visualization:
+  flood_map_output: "flood_map_delft.png"
+  debug_layers_output: "debug_layers_delft.png"
+  dpi: 200
+  figsize: [8, 6]
 ```
 
 ### Run the flood mapping pipeline:
+```bash
+python -m src.pipeline -c configs/config_delft.yaml
+```
+
+Or use the default config (if it exists in the project root):
 ```bash
 python -m src.pipeline
 ```
@@ -80,19 +113,19 @@ python -m src.pipeline -c configs/my_config.yaml
 This will:
 - Load the DEM from the path specified in config
 - Generate flood mask at the configured water level
-- Apply coastline buffer (if enabled)
+- Apply coastline buffer (if enabled) and save to `data/inter/`
 - Save results to `data/processed/`:
   - Flood mask raster (`.tif`)
   - Flood polygons vector (`.gpkg`)
-  - Summary report (`.txt`)
-- Print total flooded area in km²
-
-### Run visualization:
-```bash
-python -m src.viz
+  - Summary repor -c configs/config_delft.yaml
 ```
 
 With a custom configuration file:
+```bash
+python -m src.viz --config configs/my_config.yaml
+```
+
+Generates flood visualization maps using settings from the config file. Output filenames are specified in the config's `visualization` section
 ```bash
 python -m src.viz --config configs/my_config.yaml
 ```
@@ -114,18 +147,27 @@ python -m src.pipeline --help
 python -m src.viz --help
 
 # Use custom config
-python -m src.pipeline -c path/to/config.yaml
-python -m src.viz -c path/to/config.yaml
+python -m src.pipeline -c configs/config_delft.yaml
+python -m src.viz -c configs/config_nice.yaml
 ```
+
+**Managing Multiple Configurations:**
+- Store different configs in the `configs/` directory
+- Each config can have unique settings for different regions or scenarios
+- Output files are automatically named based on the `info.name` field
+- This prevents output conflicts when running multiple configurations
 
 ## Project Structure
 
 ```
 .
-├── config.yaml           # Pipeline configuration (EDIT THIS!)
+├── configs/              # Configuration files for different regions
+│   ├── config_delft.yaml
+│   └── config_nice.yaml
 ├── data/
-│   ├── raw/              # Input DEM files
-│   └── processed/        # Output flood masks and polygons
+│   ├── raw/              # Input DEM files and coastline shapefiles
+│   ├── inter/            # Intermediate files (coastline buffer masks)
+│   └── processed/        # Output flood masks, polygons, and visualizations
 ├── notebooks/            # Jupyter notebooks for exploration
 ├── src/
 │   ├── config.py         # Configuration loader
