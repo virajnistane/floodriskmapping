@@ -15,6 +15,7 @@ RAW_DIR = DATA_DIR / "raw"
 PROC_DIR = DATA_DIR / "processed"
 PROC_DIR.mkdir(parents=True, exist_ok=True)
 
+
 # Function definitions
 def load_dem(path: Path) -> DatasetReader:
     try:
@@ -23,6 +24,7 @@ def load_dem(path: Path) -> DatasetReader:
     except rasterio.errors.RasterioIOError as e:
         print(f"Error loading DEM from {path}: {e}")
         raise
+
 
 # Path for example usage
 if __name__ == "__main__":
