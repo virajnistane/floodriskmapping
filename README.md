@@ -27,6 +27,7 @@ The flood mapping pipeline consists of the following steps:
 - **rasterio** – Raster data I/O and processing
 - **GeoPandas** – Vector geometry operations
 - **NumPy** – Array manipulation
+- **PyYAML** – Configuration management
 - **DVC** (optional) – Data version control
 - **pytest** – Testing framework
 
@@ -46,6 +47,26 @@ source .venv/bin/activate
 
 ## How to Run
 
+### Configuration
+
+All pip-m src.pipeline
+```
+
+This will:
+- Load the DEM from the path specified in `config.yaml`
+- Generate flood mask at the configured water level
+- Apply coastline buffer (if enabled)
+- Save results to `data/processed/`:
+  - Flood mask raster (`.tif`)
+  - Flood polygons vector (`.gpkg`)
+  - Summary report (`.txt`
+```yaml
+pipeline:
+  water_level: 2.0  # meters above reference
+  coast_buffer_dist_m: 5000.0  # buffer distance in meters
+  metric_crs: 3857  # EPSG code for area calculations
+```
+
 ### Run the flood mapping pipeline:
 ```bash
 python src/pipeline.py
@@ -59,8 +80,10 @@ This will:
   - `flood_polygons.gpkg` (vector)
 - Print total flooded area in km²
 
-### Run visualization (optional):
-```bash
+### Run-m src.viz
+```
+
+Generates flood visualization maps using settings from `config.yaml`.bash
 python src/viz.py
 ```
 
@@ -69,13 +92,17 @@ python src/viz.py
 pytest tests/
 ```
 
-## Project Structure
-
-```
-.
+## Pconfig.yaml           # Pipeline configuration (EDIT THIS!)
 ├── data/
 │   ├── raw/              # Input DEM files
 │   └── processed/        # Output flood masks and polygons
+├── notebooks/            # Jupyter notebooks for exploration
+├── src/
+│   ├── config.py         # Configuration loader
+│   ├── pipeline.py       # Main flood mapping pipeline
+│   ├── load_data.py      # Data loading utilities
+│   ├── coastline_buffer.py  # Coastline processing
+│   └── viz.py sed/        # Output flood masks and polygons
 ├── notebooks/            # Jupyter notebooks for exploration
 ├── src/
 │   ├── pipeline.py       # Main flood mapping pipeline

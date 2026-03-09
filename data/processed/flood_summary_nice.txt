@@ -1,0 +1,5 @@
+Flood Risk Mapping Summary Report
+===============================
+Water level threshold: 2.0 m
+Flooded ratio: 35.44%
+Total flooded area: 78.01 km²

@@ -1,0 +1,29 @@
+# Flood Risk Mapping Pipeline Configuration
+
+# Input data paths
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  dem_file: "dem_delft.tif"
+  coastline_file: "ne_10m_coastline/ne_10m_coastline.shp"
+
+# Pipeline parameters
+pipeline:
+  water_level: 2.0  # meters above reference
+  coast_buffer_dist_m: 5000.0  # buffer distance around coastline in meters (null to disable)
+  metric_crs: 3857  # EPSG code for area calculations (3857 = Web Mercator)
+
+# Output file names
+output:
+  flood_mask_raster: "flood_mask_delft.tif"
+  flood_polygons_vector: "flood_polygons_delft.gpkg"
+  summary_report: "flood_summary_delft.txt"
+  vector_driver: "GPKG"  # GeoPackage format
+
+# Visualization settings (optional)
+visualization:
+  dpi: 200
+  figsize: [8, 6]
+  flood_colormap: "Blues"
+  terrain_colormap: "terrain"
+  flood_alpha: 0.5
