@@ -1,0 +1,6 @@
+outs:
+- md5: 9fd46d1d913dda297dd296a204fe5b87.dir
+  size: 7269989
+  nfiles: 7
+  hash: md5
+  path: ne_10m_coastline
