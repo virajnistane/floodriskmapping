@@ -1,0 +1,5 @@
+outs:
+- md5: a22d334c2682d782e10b5f6271873858
+  size: 167052
+  hash: md5
+  path: coastline_buffer_mask_nice_5000.0m.tif
