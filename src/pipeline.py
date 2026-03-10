@@ -243,7 +243,7 @@ if __name__ == "__main__":
         "-c", "--config", default="config.yaml", help="Path to YAML configuration file"
     )
     parser.add_argument(
-        "-pd", "--push-data", default=False, action="store_true", help="Whether to push outputs to DVC remote"
+        "-pd", "--push-data", action="store_true", help="Whether to push outputs to DVC remote"
     )
     args = parser.parse_args()
     main(config_path=args.config, push_data=args.push_data)
