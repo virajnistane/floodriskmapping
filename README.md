@@ -1,6 +1,25 @@
 # Flood Risk Mapping
 
-A simple flood-exposure toy project using open Digital Elevation Model (DEM) data to identify areas at risk of flooding.
+![Python](https://img.shields.io/badge/python-3.12+-blue.svg)
+![CI](https://github.com/virajnistane/deltares_floodriskmapping/workflows/CI%2FCD%20Pipeline/badge.svg)
+![Docker](https://img.shields.io/badge/docker-enabled-blue.svg)
+![DVC](https://img.shields.io/badge/DVC-S3-orange.svg)
+
+🌊 Flood risk mapping pipeline powered by Copernicus DEM | Automated geospatial analysis with Docker & DVC
+
+A containerized Python pipeline for flood exposure mapping using open Copernicus DEM data. Identifies flood-prone areas via water-level thresholding, generates vector polygons, calculates statistics, and integrates DVC for cloud-based data versioning.
+
+## ✨ Features
+
+- 🗺️ **Automated Flood Mapping** – Process elevation data to identify flood-prone areas
+- 🌊 **Configurable Water Levels** – Set custom thresholds for different scenarios
+- 🏖️ **Coastline Buffering** – Optional coastal zone filtering for accurate analysis
+- 📊 **Statistical Reports** – Generate area summaries and flood extent metrics
+- 🎨 **Visualization** – Create publication-ready flood maps
+- 🐳 **Docker Support** – Reproducible containerized deployment
+- ☁️ **Cloud Storage** – DVC integration with AWS S3 for data versioning
+- ⚙️ **CI/CD Pipeline** – Automated testing and deployment with GitHub Actions
+- 📝 **YAML Configuration** – Easy multi-region setup with config files
 
 ## Goal
 
@@ -28,8 +47,11 @@ The flood mapping pipeline consists of the following steps:
 - **GeoPandas** – Vector geometry operations
 - **NumPy** – Array manipulation
 - **PyYAML** – Configuration management
-- **DVC** (optional) – Data version control
+- **DVC** – Data version control with S3 backend
+- **Docker** – Containerized deployment
+- **uv** – Fast Python package manager
 - **pytest** – Testing framework
+- **GitHub Actions** – CI/CD pipeline
 
 ## Installation
 
@@ -254,6 +276,20 @@ docker compose run --rm floodmap python -m src.pipeline -c /app/configs/config_d
 └── pyproject.toml        # Project dependencies
 ```
 
+## Documentation
+
+- 📘 [Cloud Storage Setup (AWS S3/DVC)](docs/cloud.md)
+- 🐳 [Docker Deployment Guide](docs/docker.md)
+- ⚙️ [CI/CD Pipeline](.github/workflows/ci.yml)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
 ## License
 
 This is a toy project for educational purposes.
+
+---
+
+**Built with** 🌊 for geospatial flood risk analysis

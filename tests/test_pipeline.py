@@ -148,7 +148,7 @@ def test_compute_flood_mask_updates_ratio(test_config, test_dem):
     )
 
     initial_ratio = pipeline.ratio_flooded
-    mask = pipeline.compute_flood_mask(test_dem, water_level=2.0)
+    pipeline.compute_flood_mask(test_dem, water_level=2.0)
 
     # Ratio should be updated after computation
     assert pipeline.ratio_flooded != initial_ratio
