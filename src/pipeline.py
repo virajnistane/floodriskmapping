@@ -1,4 +1,5 @@
 import argparse
+import subprocess
 from pathlib import Path
 from typing import Any, Optional
 
@@ -9,18 +10,15 @@ import rasterio
 from rasterio import features
 from rasterio.io import DatasetReader
 from shapely.geometry import shape
-import subprocess
 
 from src.coastline_buffer import CoastlineBuffer
 from src.config import Config, load_config
 from src.load_data import load_dem
 
-def track_and_push_outputs(
-    outputs: list[Path],
-    push_remote: bool = True
-) -> None:
+
+def track_and_push_outputs(outputs: list[Path], push_remote: bool = True) -> None:
     """Track outputs with DVC and optionally push to remote.
-    
+
     Args:
         outputs: List of file paths to track
         push_remote: Whether to push to DVC remote storage
@@ -33,20 +31,15 @@ def track_and_push_outputs(
                     ["dvc", "add", str(output)],
                     check=True,
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
                 print(f"✓ Tracked with DVC: {output}")
             except subprocess.CalledProcessError as e:
                 print(f"⚠ Failed to track {output}: {e.stderr}")
-    
+
     if push_remote:
         try:
-            subprocess.run(
-                ["dvc", "push"],
-                check=True,
-                capture_output=True,
-                text=True
-            )
+            subprocess.run(["dvc", "push"], check=True, capture_output=True, text=True)
             print("✓ Pushed all outputs to DVC remote")
         except subprocess.CalledProcessError as e:
             print(f"⚠ Failed to push to remote: {e.stderr}")
@@ -170,17 +163,11 @@ def main(config_path: str = "config.yaml", push_data: bool = True) -> None:
 
     try:
         print("Pulling data from DVC remote (S3)...")
-        subprocess.run(
-            ["dvc", "pull"],
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        subprocess.run(["dvc", "pull"], check=True, capture_output=True, text=True)
         print("✓ Data pulled successfully")
     except subprocess.CalledProcessError as e:
         print(f"⚠ Failed to pull data: {e.stderr}")
         print("Continuing with local data if available...")
-    
 
     # Initialize pipeline with config parameters
     pipeline = FloodRiskPipeline(
@@ -194,7 +181,7 @@ def main(config_path: str = "config.yaml", push_data: bool = True) -> None:
 
     # Load DEM
     dem_ds = load_dem(config.dem_path)
-    
+
     try:
         # Compute flood mask
         flooded_mask = pipeline.compute_flood_mask(dem_ds)
@@ -221,18 +208,19 @@ def main(config_path: str = "config.yaml", push_data: bool = True) -> None:
 
     if push_data:
         print("Tracking and pushing outputs...")
-        
+
         outputs_to_track = [
             config.flood_mask_path,
             config.flood_polygons_path,
-            config.summary_report_path
+            config.summary_report_path,
         ]
-        
+
         # Add coast mask if it exists
         if hasattr(pipeline, "coast_mask_path") and pipeline.coast_mask_path:
             outputs_to_track.append(pipeline.coast_mask_path)
-        
+
         track_and_push_outputs(outputs_to_track, push_remote=True)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -243,7 +231,9 @@ if __name__ == "__main__":
         "-c", "--config", default="config.yaml", help="Path to YAML configuration file"
     )
     parser.add_argument(
-        "--no-push-data", action="store_true", help="Skip tracking and pushing outputs to DVC remote (default: push enabled)"
+        "--no-push-data",
+        action="store_true",
+        help="Skip tracking and pushing outputs to DVC remote (default: push enabled)",
     )
     args = parser.parse_args()
     main(config_path=args.config, push_data=not args.no_push_data)
