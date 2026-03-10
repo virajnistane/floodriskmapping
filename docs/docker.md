@@ -2,92 +2,158 @@
 
 ## Overview
 
-This project includes Docker support for containerized deployment, making it easy to run the flood risk mapping pipeline in any environment without manual dependency installation.
+This project includes Docker support for containerized deployment with full DVC and AWS S3 integration. The container automatically pulls data from S3, runs the pipeline, and pushes outputs back to S3.
 
 ## Quick Start
 
-### Build the Image
+### Prerequisites
+
+1. **Create `.env` file for AWS credentials**:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` with your credentials:
+   ```bash
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_DEFAULT_REGION=eu-north-1
+   ```
+
+### Build and Run
 
 ```bash
-docker build -t floodriskmap:latest .
+# Build the image
+docker compose build floodmap
+
+# Run with default config (pulls from S3, pushes outputs)
+docker compose up floodmap
+
+# Run with different config
+docker compose run --rm floodmap python -m src.pipeline -c /app/configs/config_nice.yaml
+
+# Run without DVC tracking/pushing
+docker compose run --rm floodmap python -m src.pipeline -c /app/configs/config_delft.yaml --no-push-data
 ```
 
-### Run the Pipeline
+## Using Docker Compose (Recommended)
+
+Docker Compose simplifies multi-container workflows and automatically handles volume mounts and environment variables.
+
+### Basic Commands
 
 ```bash
-# Using default config
-docker run --rm \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/configs:/app/configs \
-  floodriskmap:latest
+# Build images
+docker compose build
 
-# Using specific config
-docker run --rm \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/configs:/app/configs \
-  -e DEFAULT_CONFIG=/app/configs/config_nice.yaml \
-  floodriskmap:latest
+# Run pipeline with default config
+docker compose up floodmap
 
 # Run visualization
-docker run --rm \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/configs:/app/configs \
-  floodriskmap:latest \
-  python -m src.viz -c /app/configs/config_delft.yaml
-```
+docker compose up viz
 
-## Using Docker Compose
-
-Docker Compose simplifies multi-container workflows:
-
-```bash
-# Build and run pipeline
-docker-compose up floodmap
-
-# Run visualization
-docker-compose up viz
-
-# Run both
-docker-compose up
+# Run both services
+docker compose up
 
 # Build without cache
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # Run in background
-docker-compose up -d
+docker compose up -d
+
+# View logs
+docker compose logs -f floodmap
 ```
 
-### With DVC and AWS S3
+### Running Different Configurations
 
 ```bash
-# Set AWS credentials in environment
-export AWS_ACCESS_KEY_ID=your_key
-export AWS_SECRET_ACCESS_KEY=your_secret
-export AWS_DEFAULT_REGION=us-east-1
+# Method 1: Override command (recommended)
+docker compose run --rm floodmap python -m src.pipeline -c /app/configs/config_nice.yaml
 
-# Run with DVC push
-docker-compose run floodmap python -m src.pipeline -c /app/configs/config_delft.yaml --push-data
+# Method 2: Environment variable
+docker compose run --rm -e DEFAULT_CONFIG=/app/configs/config_nice.yaml floodmap
+
+# Method 3: Edit docker-compose.yml
+# Uncomment and modify the command line:
+# command: ["python", "-m", "src.pipeline", "-c", "/app/configs/config_nice.yaml"]
+```
+
+### DVC Control
+
+```bash
+# Default: automatically pulls and pushes with DVC
+docker compose up floodmap
+
+# Skip DVC tracking/pushing
+docker compose run --rm floodmap python -m src.pipeline -c /app/configs/config_delft.yaml --no-push-data
+```
+
+## Direct Docker Run (Without Compose)
+
+If not using Docker Compose, you need to manually specify all mounts and environment variables:
+
+```bash
+# Build image
+docker build -t floodriskmap:latest .
+
+# Run with DVC support
+docker run --rm \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/configs:/app/configs \
+  -v $(pwd)/.dvc:/app/.dvc \
+  -v $(pwd)/.git:/app/.git:ro \
+  --env-file .env \
+  floodriskmap:latest
+
+# Run with specific config
+docker run --rm \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/configs:/app/configs \
+  -v $(pwd)/.dvc:/app/.dvc \
+  -v $(pwd)/.git:/app/.git:ro \
+  --env-file .env \
+  floodriskmap:latest \
+  python -m src.pipeline -c /app/configs/config_nice.yaml
+
+# Run without DVC tracking/pushing
+docker run --rm \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/configs:/app/configs \
+  --env-file .env \
+  floodriskmap:latest \
+  python -m src.pipeline -c /app/configs/config_delft.yaml --no-push-data
 ```
 
 ## Volume Mounts
 
-The container expects three volume mounts:
+The container requires these volume mounts:
 
-| Host Path | Container Path | Purpose |
-|-----------|----------------|---------|
-| `./data` | `/app/data` | Input/output data files |
-| `./configs` | `/app/configs` | Configuration files |
-| `./data/processed` | `/app/data/processed` | Output results |
+| Host Path | Container Path | Purpose | Required |
+|-----------|----------------|---------|----------|
+| `./data` | `/app/data` | Input/output data files | Yes |
+| `./configs` | `/app/configs` | Configuration files | Yes |
+| `./.dvc` | `/app/.dvc` | DVC config and cache | For DVC |
+| `./.git` | `/app/.git` | Git repository | For DVC |
 
-**Example**:
-```bash
-docker run --rm \
-  -v /path/to/your/data:/app/data \
-  -v /path/to/your/configs:/app/configs \
-  floodriskmap:latest
-```
+**Note**: `.dvc` and `.git` mounts are required for DVC to function inside the container.
 
 ## Environment Variables
+
+### Using .env File (Recommended)
+
+Create a `.env` file in the project root:
+
+```bash
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_DEFAULT_REGION=eu-north-1
+DEFAULT_CONFIG=/app/configs/config_delft.yaml
+```
+
+Docker Compose automatically loads this file. For `docker run`, use `--env-file .env`.
+
+### Manual Environment Variables
 
 Configure the container with environment variables:
 
@@ -96,9 +162,11 @@ docker run --rm \
   -e DEFAULT_CONFIG=/app/configs/config_nice.yaml \
   -e AWS_ACCESS_KEY_ID=your_key \
   -e AWS_SECRET_ACCESS_KEY=your_secret \
-  -e AWS_DEFAULT_REGION=us-east-1 \
+  -e AWS_DEFAULT_REGION=eu-north-1 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/configs:/app/configs \
+  -v $(pwd)/.dvc:/app/.dvc \
+  -v $(pwd)/.git:/app/.git:ro \
   floodriskmap:latest
 ```
 
@@ -107,17 +175,24 @@ docker run --rm \
 For debugging or exploration:
 
 ```bash
-# Start interactive shell
+# Start interactive shell with docker compose
+docker compose run --rm floodmap /bin/bash
+
+# Or with docker run
 docker run -it --rm \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/configs:/app/configs \
+  -v $(pwd)/.dvc:/app/.dvc \
+  -v $(pwd)/.git:/app/.git:ro \
+  --env-file .env \
   floodriskmap:latest \
   /bin/bash
 
 # Inside container
 python -m src.pipeline -c /app/configs/config_delft.yaml
 python -m src.viz -c /app/configs/config_delft.yaml
-pytest tests/  # If tests are copied
+dvc status
+dvc pull
 ```
 
 ## Advanced Usage
@@ -269,6 +344,37 @@ spec:
 
 ## Troubleshooting
 
+### DVC Issues
+
+**Error**: `ERROR: you are not inside of a DVC repository`
+
+**Solution**: Mount `.dvc` and `.git` directories:
+```yaml
+# In docker-compose.yml
+volumes:
+  - ./.dvc:/app/.dvc
+  - ./.git:/app/.git:ro
+```
+
+**Error**: `s3 is supported, but requires 'dvc-s3' to be installed`
+
+**Solution**: Rebuild image with updated dependencies:
+```bash
+# Update lockfile first
+uv lock --upgrade-package dvc --upgrade-package pathspec
+
+# Rebuild without cache
+docker compose build --no-cache floodmap
+```
+
+**Error**: `cannot import name '_DIR_MARK' from 'pathspec'`
+
+**Solution**: Update pathspec to ≥0.12.1 and dvc to ≥3.66.1:
+```bash
+uv lock --upgrade-package pathspec --upgrade-package dvc
+docker compose build floodmap
+```
+
 ### GDAL Issues
 
 **Error**: `ERROR 4: Unable to open EPSG support file`
@@ -319,24 +425,49 @@ docker build --cache-from floodriskmap:latest -t floodriskmap:latest .
 
 ## Best Practices
 
-1. **Use .dockerignore** – Exclude unnecessary files (data/, .venv/, .git/)
+1. **Use .dockerignore** – Exclude unnecessary files (data/, .venv/, tests/)
 2. **Layer caching** – Copy dependency files before source code
-3. **Non-root user** – Run container as unprivileged user
-4. **Multi-stage builds** – Separate build and runtime stages
-5. **Health checks** – Add HEALTHCHECK instruction for production
-6. **Security scanning** – Use `docker scan` or Trivy
+3. **Non-root user** – Container runs as unprivileged user (flooduser)
+4. **Multi-stage builds** – Separate build and runtime stages for smaller images
+5. **Health checks** – Add HEALTHCHECK instruction for production deployments
+6. **Security scanning** – Use `docker scan` or Trivy to check for vulnerabilities
 7. **Pin versions** – Use specific Python/GDAL versions, not `latest`
-8. **Secrets management** – Use Docker secrets or env files, never bake into image
+8. **Secrets management** – Use `.env` file or Docker secrets, never bake credentials into image
+9. **DVC integration** – Mount `.dvc` and `.git` for version control inside containers
+10. **Use Docker Compose V2** – Use `docker compose` (space) instead of `docker-compose` (dash)
+
+## Docker Compose V2
+
+This project uses **Docker Compose V2** syntax. Use `docker compose` (with space):
+
+```bash
+# ✅ Correct (V2)
+docker compose up
+docker compose build
+
+# ❌ Old (V1, deprecated)
+docker-compose up
+docker-compose build
+```
+
+If you have the old `docker-compose` command and see errors like `ModuleNotFoundError: No module named 'distutils'`, install Docker Compose V2 as a plugin or use the commands above.
 
 ## Image Size Optimization
 
-Current image: ~800 MB (with GDAL dependencies)
+Current image: ~2.3 GB (with GDAL, DVC, and all dependencies)
 
-**Optimizations**:
-- Use `python:3.12-slim` (current): ~150 MB base
-- Multi-stage build: Reduces to ~600 MB
-- Alpine Linux: ~400 MB (but GDAL compatibility issues)
-- Distroless: ~550 MB (no shell, very secure)
+**Size breakdown**:
+- Python 3.12-slim base: ~150 MB
+- GDAL and system libraries: ~400 MB
+- Python packages (including DVC, rasterio, geopandas): ~1.7 GB
+
+**Optimization strategies**:
+- ✅ Using `python:3.12-slim` instead of full Python image
+- ✅ Layer caching for dependencies (uv sync)
+- ✅ `.dockerignore` to exclude unnecessary files
+- Multi-stage build: Can reduce to ~1.8 GB
+- Alpine Linux: ~800 MB (but GDAL compatibility issues)
+- Remove dev dependencies: Already done (`--no-dev` flag)
 
 ## Reference
 

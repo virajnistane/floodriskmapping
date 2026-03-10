@@ -47,7 +47,7 @@ uv sync --extra s3
 
 ### 2. Configure AWS Credentials
 
-#### Option A: AWS CLI Configuration (Recommended)
+#### Option A: AWS CLI Configuration (Recommended for local development)
 ```bash
 # Install AWS CLI
 pip install awscli
@@ -61,14 +61,30 @@ aws configure
 #   Default output format: json
 ```
 
-#### Option B: Environment Variables
+#### Option B: .env File (Recommended for Docker)
+```bash
+# Copy example file
+cp .env.example .env
+
+# Edit with your credentials
+# .env
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_DEFAULT_REGION=eu-north-1
+```
+
+Docker Compose automatically loads this file. DVC will use these environment variables.
+
+**Important**: `.env` is in `.gitignore` to prevent committing credentials.
+
+#### Option C: Environment Variables
 ```bash
 export AWS_ACCESS_KEY_ID=your_access_key
 export AWS_SECRET_ACCESS_KEY=your_secret_key
 export AWS_DEFAULT_REGION=us-east-1
 ```
 
-#### Option C: IAM Role (for EC2/Lambda)
+#### Option D: IAM Role (for EC2/Lambda)
 If running on AWS infrastructure, attach an IAM role with S3 permissions.
 
 ### 3. Configure DVC Remote
@@ -153,11 +169,14 @@ dvc pull --force
 
 ### Pipeline Integration
 
-The pipeline can automatically push outputs to S3:
+The pipeline automatically tracks and pushes outputs to S3 by default:
 
 ```bash
-# Run pipeline and push results to S3
-python -m src.pipeline -c configs/config_delft.yaml --push-data
+# Run pipeline (automatically tracks and pushes results to S3)
+python -m src.pipeline -c configs/config_delft.yaml
+
+# Skip DVC tracking/pushing if needed
+python -m src.pipeline -c configs/config_delft.yaml --no-push-data
 
 # Manual tracking and push
 dvc add data/processed/flood_mask_delft.tif
@@ -206,8 +225,8 @@ git push
 
 ### Team Collaboration
 ```bash
-# Teammate A: Process new data
-python -m src.pipeline -c configs/config_nice.yaml --push-data
+# Teammate A: Process new data (automatically pushed)
+python -m src.pipeline -c configs/config_nice.yaml
 git add data/processed/*.dvc
 git commit -m "Add Nice flood analysis"
 git push

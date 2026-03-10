@@ -95,19 +95,14 @@ visualization:
 
 ### Run the flood mapping pipeline:
 ```bash
+# Run with specific config
 python -m src.pipeline -c configs/config_delft.yaml
-```
 
-Or use the default config (if it exists in the project root):
-```bash
-python -m src.pipeline
-```
+# Run and track/push outputs to DVC S3 (default behavior)
+python -m src.pipeline -c configs/config_delft.yaml
 
-With a custom configuration file:
-```bash
-python -m src.pipeline --config configs/my_config.yaml
-# or short form
-python -m src.pipeline -c configs/my_config.yaml
+# Skip DVC tracking/pushing
+python -m src.pipeline -c configs/config_delft.yaml --no-push-data
 ```
 
 This will:
@@ -167,8 +162,11 @@ Large data files (DEMs, flood outputs) are managed with **DVC (Data Version Cont
 # Pull data from S3 (first time or to sync)
 dvc pull
 
-# Run pipeline and push results to S3
-python -m src.pipeline -c configs/config_delft.yaml --push-data
+# Run pipeline (automatically tracks and pushes results to S3)
+python -m src.pipeline -c configs/config_delft.yaml
+
+# Run without DVC tracking/pushing
+python -m src.pipeline -c configs/config_delft.yaml --no-push-data
 
 # Manually track and push new files
 dvc add data/processed/new_output.tif
@@ -185,9 +183,22 @@ git commit -m "Add new output"
    ```
 
 2. **Configure AWS credentials**:
+   
+   Create a `.env` file in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` with your credentials:
+   ```bash
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_DEFAULT_REGION=eu-north-1
+   ```
+   
+   Or use AWS CLI:
    ```bash
    aws configure
-   # Enter your AWS Access Key ID and Secret Access Key
    ```
 
 3. **Pull data from S3**:
@@ -196,6 +207,30 @@ git commit -m "Add new output"
    ```
 
 **For detailed setup, costs, troubleshooting, and best practices**, see [docs/cloud.md](docs/cloud.md).
+
+## Docker Deployment
+
+Run the pipeline in a container without installing dependencies locally:
+
+```bash
+# Build image
+docker compose build floodmap
+
+# Run with default config
+docker compose up floodmap
+
+# Run with different config
+docker compose run --rm floodmap python -m src.pipeline -c /app/configs/config_nice.yaml
+
+# Skip DVC tracking/pushing
+docker compose run --rm floodmap python -m src.pipeline -c /app/configs/config_delft.yaml --no-push-data
+```
+
+**Prerequisites for DVC/S3 support**:
+1. Create `.env` file with AWS credentials (see Cloud Data Storage section)
+2. DVC and Git directories are automatically mounted
+
+**For detailed Docker setup, deployment options, and troubleshooting**, see [docs/docker.md](docs/docker.md).
 
 ## Project Structure
 
