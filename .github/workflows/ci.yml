@@ -1,0 +1,129 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gdal-bin libgdal-dev gcc g++
+        
+    - name: Set GDAL environment variables
+      run: |
+        echo "GDAL_CONFIG=/usr/bin/gdal-config" >> $GITHUB_ENV
+        echo "GDAL_DATA=/usr/share/gdal" >> $GITHUB_ENV
+        
+    - name: Install uv
+      run: pip install uv
+        
+    - name: Cache uv
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+        
+    - name: Install dependencies
+      run: |
+        uv sync --extra dev
+        
+    - name: Lint with ruff
+      run: |
+        uv run ruff check .
+        
+    - name: Type check with mypy
+      run: |
+        uv run mypy src/
+        
+    - name: Run tests
+      run: |
+        uv run pytest tests/ -v
+        
+  dvc:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # Only on main branch
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gdal-bin libgdal-dev gcc g++
+        
+    - name: Set GDAL environment variables
+      run: |
+        echo "GDAL_CONFIG=/usr/bin/gdal-config" >> $GITHUB_ENV
+        echo "GDAL_DATA=/usr/share/gdal" >> $GITHUB_ENV
+        
+    - name: Install uv
+      run: pip install uv
+        
+    - name: Cache uv
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+        
+    - name: Install dependencies with S3 support
+      run: |
+        uv sync --extra s3
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+        
+    - name: Pull DVC data
+      run: uv run dvc pull
+      
+    - name: Run pipeline
+      run: uv run python -m src.pipeline -c configs/config_delft.yaml
+      
+    - name: Commit DVC outputs
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add data/**/*.dvc .dvc/config
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "CI: Update DVC outputs [skip ci]"
+          git push
+        fi
+        
+    - name: Push DVC data
+      run: uv run dvc push
