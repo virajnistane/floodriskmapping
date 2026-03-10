@@ -6,6 +6,7 @@ info:
 
 # Input data paths
 data:
+  s3_bucket: "vn-floodgis-toy"
   raw_dir: "data/raw"
   inter_dir: "data/inter"
   processed_dir: "data/processed"

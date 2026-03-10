@@ -28,6 +28,14 @@ class Config:
         return str(self._config.get("info", {}).get("name", "default_config"))
 
     @property
+    def s3_bucket(self) -> Optional[str]:
+        """S3 bucket name for data storage (optional)."""
+        if "data" in self._config and "s3_bucket" in self._config["data"]:
+            return str(self._config["data"]["s3_bucket"])
+        else:
+            return None
+
+    @property
     def raw_dir(self) -> Path:
         """Directory containing raw input data."""
         return Path(self._config["data"]["raw_dir"])
