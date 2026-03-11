@@ -1,7 +1,7 @@
 # Flood Risk Mapping
 
 ![Python](https://img.shields.io/badge/python-3.12+-blue.svg)
-![CI](https://github.com/virajnistane/deltares_floodriskmapping/workflows/CI%2FCD%20Pipeline/badge.svg)
+![CI](https://github.com/virajnistane/floodriskmapping/workflows/CI%2FCD%20Pipeline/badge.svg)
 ![Docker](https://img.shields.io/badge/docker-enabled-blue.svg)
 ![DVC](https://img.shields.io/badge/DVC-S3-orange.svg)
 
